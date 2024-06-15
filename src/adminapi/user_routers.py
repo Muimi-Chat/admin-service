@@ -11,9 +11,10 @@ from django.views.decorators.csrf import csrf_exempt
 
 from .enums.account_status import AccountStatus
 
+from .enums.access_attribute import AccessAttribute
 from .enums.log_severity import LogSeverity
 
-from .models import Account, ServiceLog, SessionToken
+from .models import Account, ServiceLog, SessionToken, AccountAccess
 
 from .controllers import validate_session_token
 
@@ -48,15 +49,14 @@ def request_user_info(request):
     if account is None:
         return JsonResponse({'status': 'BAD_SESSION_TOKEN'}, status=401)
     
-    if account.status != AccountStatus.OK:
-        return JsonResponse({'status': 'ACCOUNT_DISABLED'}, status=401)
-    
     email = request_decrypt(account.id, account.encrypted_email, account.id)
     user_data = {
         'username': account.username,
         'email': email,
         'totpEnabled': account.totp_enabled,
-        'createdAt': account.created_at
+        'createdAt': account.created_at,
+        'deactivated': account.status != AccountStatus.OK,
+        'authenticated': account.authenticated
     }
 
     pepper_hex = os.environ.get('PEPPER_KEY', 'pepper-not-set')
@@ -88,16 +88,19 @@ def request_user_info(request):
             'isSelfSession': is_self_session
         })
 
-    log = ServiceLog.objects.create(
-        content=f"{account.username} ({account.id}) requested user information!",
-        severity=LogSeverity.VERBOSE
-    )
-    log.save()
+    attributes_ORM = AccountAccess.objects.filter(account=account)
+    attributes = []
+    for attribute in attributes_ORM:
+        attributes.append({
+            'totpRequired': attribute.access_attribute >= 1,
+            'access': AccessAttribute(attribute.access_attribute).name
+        })
 
     return JsonResponse({
         'status': "SUCCESS",
         'userData': user_data,
-        'sessions': sessions
+        'sessions': sessions,
+        'accessAttributes': attributes
     })
 
 @csrf_exempt
@@ -165,7 +168,7 @@ def change_email(request):
         cache.set(f"email_verification_{str(account.id)}", True, timeout=360)
 
         log = ServiceLog.objects.create(
-            content=f"{account.username} ({account.id}) has to change email",
+            content=f"{account.username} ({account.id}) has requested to change email to {new_email}",
             severity=LogSeverity.VERBOSE
         )
         log.save()
