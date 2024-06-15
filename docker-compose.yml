@@ -1,0 +1,50 @@
+version: '3'
+
+services:
+  admin-database:
+    image: postgres:14.12
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    # Runs on port 5432 docker
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data:z
+    networks:
+      - muimi_container_network  
+
+  admin-cache:
+    image: redis:7.2.4
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}"]
+    # Runs on 6379 Docker
+    volumes:
+      - ./redisdata:/data:z
+    networks:
+      - muimi_container_network  
+
+  admin-api:
+    image: python:3.12.3
+    # Sleep to wait for redis/postgreSQL to initalize...
+    command: >
+      bash -c "
+        cd app &&
+        pip install --no-cache-dir -r requirements.txt &&
+        cd src &&
+        sleep ${STARTUP_DELAY} &&
+        python manage.py runserver 0.0.0.0:8000
+      "
+    env_file:
+      - .env
+    volumes:
+      - ./:/app
+    ports:
+      - "${DJANGO_PORT}:8000"
+    depends_on:
+      - admin-database
+      - admin-cache
+    networks:
+      - muimi_container_network  
+
+networks:
+  muimi_container_network:
+    external: true

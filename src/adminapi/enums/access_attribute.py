@@ -1,0 +1,16 @@
+from django.db import models
+
+class AccessAttribute(models.IntegerChoices):
+    SET_USER_TOKEN = -1
+    CHANGE_USER_STATUS = -2
+    REVOKE_USER_SESSIONS = -3
+    REVOKE_USER_TOTP = -4
+    REVOKE_USER_VERIFICATION_STATUS = -5
+    VIEW_ADMIN_LOGS = -6
+    # Below here requires TOTP
+    DEACTIVATE_ADMIN_ACCOUNT = 1
+    CREATE_ADMIN_ACCOUNT = 2
+    CHANGE_ADMIN_ACTIVATION_STATUS = 3
+    MODIFY_ADMIN_ACCESS_ATTRIBUTE = 4
+    REVOKE_ADMIN_SESSIONS = 5
+    REVOKE_ADMIN_2FA = 6
