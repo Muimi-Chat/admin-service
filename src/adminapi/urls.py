@@ -8,6 +8,7 @@ from . import forgot_password_routers
 from . import register_admin_routers
 from . import control_admin_access_routers
 from . import view_logs_routers
+from . import view_users_routers
 
 urlpatterns = [
     path("login", routers.login, name="login"),
@@ -26,8 +27,11 @@ urlpatterns = [
 
     path("reset-password/", forgot_password_routers.send_forgot_password_email, name="reset_password"),
     path("confirm-password-reset/", forgot_password_routers.confirm_password_reset, name="confirm_password_reset"),
+    
+    path("view-logs/", view_logs_routers.view_logs, name="view_logs"),
 
     path("register-admin/", register_admin_routers.register_new_admin, name="register_admin"),
     path("control-admin-access/", control_admin_access_routers.control_admin_access, name="control_admin_access"),
-    path("view-logs/", view_logs_routers.view_logs, name="view_logs"),
+
+    path("view-users/", view_users_routers.view_users, name="view_users"),
 ]
