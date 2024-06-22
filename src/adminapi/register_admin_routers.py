@@ -55,6 +55,14 @@ def _is_common_password(password: str):
         CommonPasswords.objects.bulk_create(passwords)
 
 @csrf_exempt
+def create_new_admin(request):
+    try:
+        return register_new_admin(request)
+    except Exception as e:
+        print(f'ERROR: {traceback.format_exc()}')
+        return JsonResponse({'status': 'ERROR'}, status=500)
+
+@csrf_exempt
 def register_new_admin(request):
     if request.method != 'POST':
         return JsonResponse({'status': 'ERROR'}, status=404)
@@ -109,7 +117,7 @@ def register_new_admin(request):
         email_content = f"Your admin username and password is {username} and {password}. Please login at {website_url} and change your password to get started."
         email_header = "Muimi Admin"
 
-        response = send_email_with_content(email, email_header, email_content)
+        send_email_with_content(email, email_header, email_content)
     except Exception as e:
         log_message = f"Tried to send notification email to {email}, but failed due to :: {e}\n\n{traceback.format_exc()}"
         print(log_message, flush=True)
@@ -120,20 +128,18 @@ def register_new_admin(request):
         log.save()
 
     # Attempt to insert into database
-    account = Account.objects.create(
+    Account.objects.create(
         id=generated_uuid,
         username=username,
         hashed_password=hashed_password,
         encrypted_email=encrypted_email,
         hashed_email=hashed_email
     )
-    account.save()
 
-    log = ServiceLog.objects.create(
-        content=f"New admin {username} created with uuid {account.id}.",
+    ServiceLog.objects.create(
+        content=f"New admin {username} created with uuid {account.id}. By {self_username} ({account.id})",
         severity=LogSeverity.LOG
     )
-    log.save()
 
     return JsonResponse({'status': 'SUCCESS'})
 

@@ -137,7 +137,7 @@ def confirm_totp(request):
 
     try:
         email = request_decrypt(account.id, account.encrypted_email, account.id)
-        send_email_with_content(email, 'TOTP Enabled!', 'This is a notice that you have enabled TOTP on your account!')
+        send_email_with_content(email, 'TOTP Enabled (Admin)', 'This is a notice that you have enabled TOTP on your account!')
 
         log = ServiceLog.objects.create(
             content=f"{account.username} ({account.id}) has confirmed TOTP",
@@ -206,7 +206,7 @@ def disable_totp(request):
 
     try:
         email = request_decrypt(account.id, account.encrypted_email, account.id)
-        send_email_with_content(email, 'TOTP Disabled Successfully!', 'This is a notice that you have disabled TOTP successfully!')
+        send_email_with_content(email, 'TOTP Disabled Successfully (Admin)', 'This is a notice that you have disabled TOTP successfully!')
 
         log = ServiceLog.objects.create(
             content=f"{account.username} ({account.id}) has disabled TOTP",

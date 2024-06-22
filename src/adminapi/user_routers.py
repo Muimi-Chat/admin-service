@@ -241,7 +241,7 @@ def confirm_email_change(request):
 
     try:
         email = request_decrypt(account.id, old_encrypted_email, account.id)
-        send_email_with_content(email, 'Email Changed', 'This is a notice that you have changed your email account for Muimi! If this is not intended, please reply to contact admin!')
+        send_email_with_content(email, 'Email Changed (Admin)', 'This is a notice that you have changed your email account for Muimi! If this is not intended, please reply to contact admin!')
     
         log = ServiceLog.objects.create(
             content=f"{account.username} ({account.id}) has confirmed email change!",
@@ -308,7 +308,7 @@ def change_password(request):
 
     try:
         email = request_decrypt(account.id, account.encrypted_email, account.id)
-        send_email_with_content(email, 'Password Changed', 'This is a notice that you have just changed password! All other sessions will automatically expire!')
+        send_email_with_content(email, 'Password Changed (Admin)', 'This is a notice that you have just changed password! All other sessions will automatically expire!')
     except Exception as e:
         print(e, flush=True)
         log = ServiceLog.objects.create(

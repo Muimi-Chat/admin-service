@@ -85,7 +85,7 @@ def _cache_login_attempt(ip_address):
     cache.set(key, str(current_attempts), timeout_seconds)
     return "OK"
 
-def _insert_session_token(new_token, account, client_info, country, days_until_expiry=30):
+def _insert_session_token(new_token, account, client_info, country, days_until_expiry=7):
     # Hash the token using Argon2 with a pepper
     pepper_hex = os.environ.get('PEPPER_KEY', 'pepper-not-set')
     pepper_bytes = bytes.fromhex(pepper_hex)
@@ -178,11 +178,15 @@ def handle_login(username, password, second_fa_code, user_agent, ip_address):
             send_email_with_content(email, 'New Login (Admin)!', f'Hello, we let you know you logged in at {country} ({ip_address}) with {user_agent}!')
         except Exception as e:
             print(e, flush=True)
-            log = ServiceLog.objects.create(
+            ServiceLog.objects.create(
                 content=f"Failed to notify login activity to {account.username} ({account.id}) due to :: {e}",
                 severity=LogSeverity.ERROR
             )
-            log.save()
+
+        ServiceLog.objects.create(
+            content=f"{account.username} ({account.id}) logged in from {country} using {user_agent}!",
+            severity=LogSeverity.VERBOSE
+        )
 
         return JsonResponse({'status': 'SUCCESS', 'token': session_token}, status=200)
     except ObjectDoesNotExist:

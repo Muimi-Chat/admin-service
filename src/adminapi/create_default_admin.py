@@ -49,5 +49,6 @@ def create_default_admin():
             content=f"Created default {username} created with uuid {account.id}.",
             severity=LogSeverity.LOG
         )
+        print(f"Created default ({username} : {password}) created with uuid {account.id}.", flush=True)
 
     return

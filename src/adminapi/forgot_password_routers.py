@@ -236,7 +236,7 @@ def confirm_password_reset(request):
 
     try:
         email = request_decrypt(account.id, account.encrypted_email, account.id)
-        send_email_with_content(email, 'Password Reset', 'This is a notice that you have reset your account password! All other account session will expire!')
+        send_email_with_content(email, 'Password Reset (Admin)', 'This is a notice that you have reset your adin account password! All other account session will expire!')
     except Exception as e:
         print(e, flush=True)
         log = ServiceLog.objects.create(
