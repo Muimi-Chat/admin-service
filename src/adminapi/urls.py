@@ -10,6 +10,8 @@ from . import control_admin_access_routers
 from . import view_logs_routers
 from . import view_users_routers
 
+from . import manage_users_router
+
 urlpatterns = [
     path("login", routers.login, name="login"),
     path('csrf_token/', routers.request_registration_csrf, name='get_csrf_token'),
@@ -34,4 +36,7 @@ urlpatterns = [
     path("control-admin-access/", control_admin_access_routers.control_admin_access, name="control_admin_access"),
 
     path("view-users/", view_users_routers.view_users, name="view_users"),
+    path("revoke-user-totp/", manage_users_router.remove_user_totp, name="revoke_user_totp"),
+    path("remove-user-verification/", manage_users_router.remove_user_verification, name="remove_user_verification"),
+    path("set-user-status/", manage_users_router.change_user_status, name="set_user_status"),
 ]

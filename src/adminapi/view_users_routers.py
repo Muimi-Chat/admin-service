@@ -42,7 +42,20 @@ def _get_users_list():
                     'authenticated': user['authenticated'],
                     'token': chat_user['token']
                 }
-        return None
+        # If user is not found in chat_users_list, populate with 'Not logged in yet'
+        user_id = user['id']
+        print(f"User {user_id} not found in chat_users_list. Setting token to 'Not logged in yet'", flush=True)
+        email = request_decrypt(user_id, user['encrypted_email'], user_id)
+        return {
+            'id': str(user_id),
+            'username': user['username'],
+            'email': email,
+            'totpEnabled': user['totp_enabled'],
+            'createdAt': user['created_at'].isoformat(),
+            'status': user['status'],
+            'authenticated': user['authenticated'],
+            'token': 'Not logged in yet; Undefined'
+        }
     
     with concurrent.futures.ThreadPoolExecutor() as executor:
         results = executor.map(process_user, users_list)
