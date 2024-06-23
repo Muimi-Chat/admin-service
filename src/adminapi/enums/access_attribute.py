@@ -14,3 +14,4 @@ class AccessAttribute(models.IntegerChoices):
     MODIFY_ADMIN_ACCESS_ATTRIBUTE = 4
     REVOKE_ADMIN_SESSIONS = 5
     REVOKE_ADMIN_2FA = 6
+    REVOKE_ADMIN_VERIFICATION = 7

@@ -11,6 +11,10 @@ from . import view_logs_routers
 from . import view_users_routers
 
 from . import manage_users_router
+from . import view_admins_routers
+from . import disable_admin_verification_routers
+from . import disable_admin_totp_routers
+from . import change_admin_status_routers
 
 urlpatterns = [
     path("login", routers.login, name="login"),
@@ -34,6 +38,11 @@ urlpatterns = [
 
     path("register-admin/", register_admin_routers.register_new_admin, name="register_admin"),
     path("control-admin-access/", control_admin_access_routers.control_admin_access, name="control_admin_access"),
+    path("toggle-admin-access/", control_admin_access_routers.toggle_admin_access, name="toggle_admin_access"),
+    path("view-admins/", view_admins_routers.view_admins, name="view_admins"),
+    path("disable-admin-verification/", disable_admin_verification_routers.disable_admin_verification, name="disable_admin_verification"),
+    path("disable-admin-totp/", disable_admin_totp_routers.disable_admin_totp, name="disable_admin_totp"),
+    path("change-admin-status/", change_admin_status_routers.change_admin_status, name="change_admin_status"),
 
     path("view-users/", view_users_routers.view_users, name="view_users"),
     path("revoke-user-totp/", manage_users_router.remove_user_totp, name="revoke_user_totp"),
