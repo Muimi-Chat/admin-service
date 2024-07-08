@@ -3,6 +3,10 @@ import json
 import uuid
 import traceback
 
+from argon2 import PasswordHasher
+from argon2.exceptions import VerifyMismatchError
+
+from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
 from django.http import JsonResponse
 from django.middleware.csrf import get_token
@@ -18,7 +22,7 @@ from .services.validate_cloudflare_token import validate_cloudflare_token
 from .services.request_decrypt import request_decrypt
 from .services.generate_email_verification_token import generate_email_verification_token
 
-from .models import ServiceLog, Account
+from .models import ServiceLog, Account, SessionToken
 
 from .enums.log_severity import LogSeverity
 
@@ -152,3 +156,64 @@ def get_user_info(request):
         return JsonResponse({'status': 'USERNAME_NOT_FOUND'}, status=401)
     
     return JsonResponse({'status': 'SUCCESS', 'uuid': account.id, 'user_status': account.status, 'deleted': account.deleted, 'authenticated': account.authenticated}, status=200)
+
+
+def logout(request):
+    if request.method != 'POST':
+        return JsonResponse({'status': 'ERROR'}, status=404)
+    
+    data = json.loads(request.body)
+
+    username = data.get('username', '')
+    user_agent = request.META['HTTP_USER_AGENT']
+    session_token = request.headers.get('session-token', '')
+
+    try:
+        # Retrieve the user's account based on the username
+        account = Account.objects.get(username=username)
+
+        # Get the pepper from the environment variable
+        pepper_hex = os.environ.get('PEPPER_KEY', 'pepper-not-set')
+        pepper_bytes = bytes.fromhex(pepper_hex)
+
+        # Iterate through all session tokens associated with the user's account
+        for session_token in SessionToken.objects.filter(account=account):
+            decrypted_client_info = request_decrypt(str(account.id), session_token.encrypted_client_info, str(account.id))
+
+            if session_token.expiry_date < timezone.now():
+                session_token.delete()
+                ServiceLog.objects.create(
+                    content=f"Session Token Expired for user :: {username} ({account.id})",
+                    severity=LogSeverity.VERBOSE
+                )
+                continue
+
+            # Validate the hashed token against the session token's hashed token
+            try:
+                hasher = PasswordHasher()
+                if hasher.verify(session_token.hashed_token, session_token.encode() + pepper_bytes):
+                    if not decrypted_client_info == user_agent:
+                        # Token is invalid since client information doesnt match
+                        session_token.delete()
+                        ServiceLog.objects.create(
+                            content=f"Client Information Mismatch for user :: {username} ({account.id})",
+                            severity=LogSeverity.WARNING
+                        )
+                        return JsonResponse({'status': 'SUCCESS'}, status=200)
+
+                    # Token is valid
+                    session_token.delete()
+                    ServiceLog.objects.create(
+                        content=f"User Logged Out :: {username} ({account.id})",
+                        severity=LogSeverity.LOG
+                    )
+                    return JsonResponse({'status': 'SUCCESS'}, status=200)
+            except VerifyMismatchError:
+                continue
+
+        # No matching valid token found
+        return JsonResponse({'status': 'BAD'}, status=404)
+
+    except ObjectDoesNotExist:
+        # User account not found
+        return JsonResponse({'status': 'BAD'}, status=404)

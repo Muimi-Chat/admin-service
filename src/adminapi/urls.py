@@ -17,6 +17,7 @@ from . import disable_admin_totp_routers
 from . import change_admin_status_routers
 
 urlpatterns = [
+    path("logout/", routers.logout, name="logout"),
     path("login", routers.login, name="login"),
     path('csrf_token/', routers.request_registration_csrf, name='get_csrf_token'),
     path("service-user-info/", routers.get_user_info, name="service_get_user_information"),
