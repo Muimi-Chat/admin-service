@@ -1,5 +1,5 @@
 # Dockerfile for Django Python's API...
-FROM python:3.12.3
+FROM python:3.14.0a1
 
 ENV PYTHONUNBUFFERED 1
 
